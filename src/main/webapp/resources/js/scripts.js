@@ -933,26 +933,33 @@ $(document).ready(function () {
     }); 
 
     var expandClick = function (e) {
-        if ($(this).attr("class").indexOf("ui-icon-triangle-1-s") != -1) {
-            $(this).removeClass("ui-icon-triangle-1-s");
-            $(this).addClass("ui-icon-triangle-1-e");
-        } else if ($(this).attr("class").indexOf("ui-icon-triangle-1-e") != -1) {
-            $(this).removeClass("ui-icon-triangle-1-e");
-            $(this).addClass("ui-icon-triangle-1-s");
-        }
-        var parent = getParent($(this).closest('li').attr("id"));
-        var children = new Array();
-        for (var k = 0; k < parent.children.length; k++) {
-            var currentChildId = parent.children[k].id;
-            children.push(document.getElementById(currentChildId));
-            if (visible[currentChildId]) {
-                visible[currentChildId] = false;
-            } else {
-                visible[currentChildId] = true;
+        var closestLi = $(e.target).closest('li');
+        if(closestLi.hasClass('oneline-li')) {
+            // The oneliner should expand to a normal view, and all
+            // tasks expand too, so trigger a click on the li-element
+            closestLi.trigger('click', [true]);
+        } else {
+            if ($(this).attr("class").indexOf("ui-icon-triangle-1-s") != -1) {
+                $(this).removeClass("ui-icon-triangle-1-s");
+                $(this).addClass("ui-icon-triangle-1-e");
+            } else if ($(this).attr("class").indexOf("ui-icon-triangle-1-e") != -1) {
+                $(this).removeClass("ui-icon-triangle-1-e");
+                $(this).addClass("ui-icon-triangle-1-s");
             }
+            var parent = getParent($(this).closest('li').attr("id"));
+            var children = new Array();
+            for (var k = 0; k < parent.children.length; k++) {
+                var currentChildId = parent.children[k].id;
+                children.push(document.getElementById(currentChildId));
+                if (visible[currentChildId]) {
+                    visible[currentChildId] = false;
+                } else {
+                    visible[currentChildId] = true;
+                }
+            }
+            $(children).slideToggle();
+            e.stopPropagation();
         }
-        $(children).slideToggle();
-        e.stopPropagation();
     };
 
     var extendedDescriptions = new Array();
@@ -1063,7 +1070,7 @@ $(document).ready(function () {
     var editingItems = new Array();
     var lastPressed = null;
 
-    var liClick = function (pressed) {
+    var liClick = function (pressed, expandChildren) {
         if (pressed.type != null) {
             //If the method was triggered by an event,
             //then use $(this) as the pressed element
@@ -1107,8 +1114,66 @@ $(document).ready(function () {
                 selectedItems.push({id:pressed.attr("id"), type:"child"});
             }
         }
+
+        // Oneliner-check
+        if(!isCtrl && view == "story-task" && pressed.hasClass("parentLi")) {
+            var storyId = pressed.attr("id");
+            var divItem = null;
+            if (pressed.hasClass("oneline-li")) {
+                divItem = $('div#story-placeholder').clone();
+            } else {
+                divItem = $('div#story-oneline-placeholder').clone();
+            }
+            var htmlStr = divItem.html();
+            htmlStr = htmlStr.replace(/-1/g, storyId); // Replace all occurences of -1
+
+            var newItem = $(htmlStr);
+            newItem.attr('id', storyId);
+
+            if(pressed.hasClass("oneline-li")) {
+                pressed.slideDown(200, function() {
+                    newItem.hide();
+                    pressed.replaceWith(newItem);
+                    updateStoryLi(getParent(storyId));
+                    $('.expand-icon', newItem).unbind('click', expandClick);
+                    $('.expand-icon', newItem).bind('click', expandClick);
+                    bindEventsToItem(newItem);
+                    newItem.slideDown(200);
+                    // Should the children (Tasks) expand too...
+                    if(typeof expandChildren !== "undefined" && expandChildren === true) {
+                        newItem.find("div.icon").trigger('click');
+                    }
+                });
+            }
+        }
         lastPressed = pressed;
         updateCookie();
+    };
+
+    var closeItem = function(event) {
+        itemId = event.target.id;
+        var item = $(event.target).closest('li');
+        var storyId = itemId; // item.attr("id");
+        var divItem = $('div#story-oneline-placeholder').clone();
+        var htmlStr = divItem.html();
+        htmlStr = htmlStr.replace(/-1/g, storyId); // Replace all occurences of -1
+
+        var newItem = $(htmlStr);
+        newItem.attr('id', storyId);
+
+        if($("div.icon", item).hasClass("ui-icon-triangle-1-s")) {
+            $("div.icon", item).trigger('click');
+        }
+
+        item.slideUp(200, function() {
+            item.replaceWith(newItem);
+            updateStoryLi(getParent(storyId));
+            $('.expand-icon', newItem).unbind('click', expandClick);
+            $('.expand-icon', newItem).bind('click', expandClick);
+            bindEventsToItem(newItem);
+            newItem.slideDown(200);
+        });
+
     };
 
     /**
@@ -1845,6 +1910,10 @@ $(document).ready(function () {
         } else {
             replaceParentOrChild(storyId, updatedStory);
 
+            if(typeof updatedStory.children !== "undefined" && updatedStory.children.length > 0) {
+                $("li#" + storyId + " div.icon").addClass("expand-icon ui-icon ui-icon-triangle-1-e");
+            }
+
             // If the update has meant a change of archive-status...
             putInCorrPrioPos(ulObj, updatedStory.lastItem, $('li#' + storyId + '.story'));
             sortList(ulObj);
@@ -1876,6 +1945,13 @@ $(document).ready(function () {
         $('.story-attr1-2').find('p.story-attr1.' + storyId).empty().append(getAttrImage(updatedStory.storyAttr1)).append(getNameIfExists(updatedStory.storyAttr1));
         $('.story-attr1-2').find('p.story-attr2.' + storyId).empty().append(getAttrImage(updatedStory.storyAttr2)).append(getNameIfExists(updatedStory.storyAttr2));
         $('.story-attr3').find('p.story-attr3.' + storyId).empty().append(getAttrImage(updatedStory.storyAttr3)).append(getNameIfExists(updatedStory.storyAttr3));
+
+        var oneline = $("li#" + storyId + ".oneline-li");
+        oneline.find("p.title-text").html(updatedStory.title);
+        oneline.find('p.attr1').empty().append(getAttrImage(updatedStory.storyAttr1)).append(getNameIfExists(updatedStory.storyAttr1));
+        oneline.find('p.attr2').empty().append(getAttrImage(updatedStory.storyAttr2)).append(getNameIfExists(updatedStory.storyAttr2));
+        oneline.find('p.attr3').empty().append(getAttrImage(updatedStory.storyAttr3)).append(getNameIfExists(updatedStory.storyAttr3));
+        oneline.find('p.date-text').html(getDate(updatedStory.deadline));
     };
 
     /**
@@ -1938,6 +2014,7 @@ $(document).ready(function () {
                 childLi.css('display', 'none');
                 iconDiv.addClass('ui-icon-triangle-1-e');
             } else {
+                visible[childLi.attr("id")];
                 childLi.css('display', 'list-item');
                 iconDiv.addClass('ui-icon-triangle-1-s');
             }
@@ -2852,12 +2929,12 @@ $(document).ready(function () {
      * Builds the visible html list using the JSON data
      */
     buildVisibleList = function (archived) {
-        if ($("#archived-checkbox").prop("checked")) {
-            $("#archived-list-container").append(generateList(true)).show();
-        }
-    	if (archived != true && !firstBuild) {
-            $('#list-container').append(generateList(false));    	    
-        }
+//        if ($("#archived-checkbox").prop("checked")) {
+//            $("#archived-list-container").append(generateList(true)).show();
+//        }
+//    	if (archived != true && !firstBuild) {
+//            $('#list-container').append(generateList(false));
+//        }
         editingItems =  new Array();
         for (var i = 0; i < selectedItems.length; ++i) {
             $('li[id|=' + selectedItems[i].id + ']').addClass("ui-selected");
@@ -3021,7 +3098,7 @@ $(document).ready(function () {
         $("a.cloneItem", elem).click(function() {
             cloneItem($(this), false);
         });
-
+        $("a.closeItem").click(closeItem);
         $("a.cloneItem-with-children", elem).click(function() {
             cloneItem($(this), true);
         });

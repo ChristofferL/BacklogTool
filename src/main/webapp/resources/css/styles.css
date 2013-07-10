@@ -689,6 +689,7 @@ p.addOptionSeries, p.addOption {
 
 .oneline {
 	display: inline-block;
+	
 }
 
 .oneline.title-text {
@@ -725,4 +726,23 @@ p.addOptionSeries, p.addOption {
 
 .attr-icon {
 	vertical-align: sub;
+}
+
+div.right-buttons {
+    float: right;
+}
+
+a.closeItem {
+    margin: 30px 0 0 0;
+}
+
+div#table-header {
+    margin-left: 20px;
+    width: 100%
+}
+
+div#table-header p.oneline {
+    vertical-align: top;
+    font-weight: bold;
+    padding-top: 0.3em;
 }

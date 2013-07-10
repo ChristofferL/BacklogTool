@@ -59,28 +59,28 @@ THE SOFTWARE.
                 <c:set var="story" value="${placeholderStory}"/>
                 <%@ include file="/WEB-INF/views/placeholders/story.jsp"%>
             </div>
+            <div id="story-oneline-placeholder" class="placeholder">
+                <c:set var="story" value="${placeholderStory}" />
+                <%@ include file="/WEB-INF/views/placeholders/story-oneline.jsp"%>
+            </div>
             <div id="task-placeholder" class="placeholder" >
                 <c:set var="task" value="${placeholderTask}"/>
                 <%@ include file="/WEB-INF/views/placeholders/task.jsp"%>
             </div>
-
             <div id="list-container-div">
-<div id="table-header" style="margin-left:20px;width:100%">
-                    <p class="oneline" style="width:${longestId+6}ex;padding:0.3em;font-size:0.75em;vertical-align:top;font-weight: bold;">ID</p>
-                    <p class="oneline" style="margin-left:4px;width:30%;vertical-align:top;padding-top:0.3em;font-weight: bold;">Title</p>
-                    <p class="oneline" style="width:12%;vertical-align:top;padding-top:0.3em;font-weight: bold;">${area.storyAttr1.name}</p>
-                    <p class="oneline" style="width:12%;vertical-align:top;padding-top:0.3em;font-weight: bold;">${area.storyAttr2.name}</p>
-                    <p class="oneline" style="width:12%;vertical-align:top;padding-top:0.3em;font-weight: bold;">${area.storyAttr3.name}</p>
-                    <p class="oneline" style="width:5%;vertical-align:top;padding-top:0.3em;font-weight: bold;">Deadline</p>
-                    <p class="oneline" style="width:5%;vertical-align:top;padding-top:0.3em;font-weight: bold;">Archived</p>
-</div>
-
-            
-            
+                <div id="table-header">
+                                    <p class="oneline" style="width:${longestId+6}ex;padding:0.3em;font-size:0.75em;">ID</p>
+                                    <p class="oneline" style="margin-left:4px;width:30%;">Title</p>
+                                    <p class="oneline" style="width:12%;">${area.storyAttr1.name}</p>
+                                    <p class="oneline" style="width:12%;">${area.storyAttr2.name}</p>
+                                    <p class="oneline" style="width:12%;">${area.storyAttr3.name}</p>
+                                    <p class="oneline" style="width:5%;">Deadline</p>
+                                    <p class="oneline" style="width:5%;">Archived</p>
+                </div>
                 <ul class="parent-child-list" id="list-container">
                     <c:forEach var="story" items="${nonArchivedStories}">
                         <c:if test="${filterIds == null || filterIds.contains(story.id)}">
-                            <%@ include file="/WEB-INF/views/placeholders/story.jsp" %>
+                            <%@ include file="/WEB-INF/views/placeholders/story-oneline.jsp" %>
                             <c:forEach var="task" items="${story.children}">
                                 <%@ include file="/WEB-INF/views/placeholders/task.jsp" %>
                             </c:forEach>

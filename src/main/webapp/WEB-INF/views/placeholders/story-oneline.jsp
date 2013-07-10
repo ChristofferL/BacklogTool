@@ -7,14 +7,14 @@
         <p class="typeMark oneline" style="width:${longestId+6}ex;">Story ${story.id}</p>
         <p class="title-text oneline">${story.title}</p>
 
-        <p class="oneline attr-text">
+        <p class="oneline attr-text attr1">
             <c:if test='${story.storyAttr1 != null && story.storyAttr1.iconEnabled}'>
                 <img class="attr-icon" src="../resources/image/${story.storyAttr1.icon}"
                     title="${story.storyAttr1.name}" /></c:if> 
                     ${story.storyAttr1.name}
         </p>
 
-        <p class="oneline attr-text">
+        <p class="oneline attr-text attr2">
             <c:if test='${story.storyAttr2 != null && story.storyAttr2.iconEnabled}'>
                 <img class="attr-icon" src="../resources/image/${story.storyAttr2.icon}"
                     title="${story.storyAttr2.name}" /></c:if> 
@@ -22,7 +22,7 @@
         </p>
 
 
-        <p class="oneline attr-text">
+        <p class="oneline attr-text attr3">
             <c:if test='${story.storyAttr3 != null && story.storyAttr3.iconEnabled}'>
                 <img class="attr-icon" src="../resources/image/${story.storyAttr3.icon}"
                     title="${story.storyAttr3.name}" /></c:if> 

@@ -221,7 +221,12 @@
         </p>
     </div>
     <!-- ATTR3 FIELD END -->
-    <a id="${story.id}" title="Remove story"
-        class="icon deleteItem delete-icon"></a> 
+    <div class="right-buttons">
+        <a id="${story.id}" title="Remove story"
+            class="icon deleteItem delete-icon"></a>
+        <br />
+        <a id="${story.id}" title="Minimize story"
+            class="closeItem icon ui-icon"></a>
+    </div>
     <br style="clear: both" />
 </li>
