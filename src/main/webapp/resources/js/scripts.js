@@ -911,7 +911,14 @@ $(document).ready(function () {
     }); 
 
     var expandClick = function (e) {
-        toggleChildren($(e.target));
+        var closestLi = $(e.target).closest('li');
+        if(closestLi.hasClass('oneline-li')) {
+            // The oneliner should expand to a normal view, and all
+            // tasks expand too, so trigger a click on the li-element
+            expandOneliner(closestLi, true);
+        } else {
+            toggleChildren($(e.target));
+        }
         e.stopPropagation();
     };
 
@@ -1045,7 +1052,7 @@ $(document).ready(function () {
     var editingItems = new Array();
     var lastPressed = null;
 
-    var liClick = function (pressed, expandChildren) {
+    var liClick = function (pressed) {
         if (pressed.type != null) {
             //If the method was triggered by an event,
             //then use $(this) as the pressed element
@@ -1091,41 +1098,37 @@ $(document).ready(function () {
         }
 
         // Oneliner-check
-        if(!isCtrl && view == "story-task" && pressed.hasClass("parentLi")) {
-            var storyId = pressed.attr("id");
-            var divItem = null;
-            if (pressed.hasClass("oneline-li")) {
-                divItem = $('div#story-placeholder').clone();
-            } else {
-                divItem = $('div#story-oneline-placeholder').clone();
-            }
-            var htmlStr = divItem.html();
-            htmlStr = htmlStr.replace(/-1/g, storyId); // Replace all occurences of -1
-
-            var newItem = $(htmlStr);
-            newItem.attr('id', storyId);
-
-            if(pressed.hasClass("oneline-li")) {
-                pressed.slideDown(200, function() {
-                    newItem.hide();
-                    pressed.replaceWith(newItem);
-                    updateStoryLi(getParent(storyId));
-                    $('.expand-icon', newItem).unbind('click', expandClick);
-                    $('.expand-icon', newItem).bind('click', expandClick);
-                    bindEventsToItem(newItem);
-                    newItem.slideDown(200);
-                    // Should the children (Tasks) expand too...
-                    if(typeof expandChildren !== "undefined" && expandChildren === true) {
-                        newItem.find("div.icon").trigger('click');
-                    }
-                });
-            }
+        if(!isCtrl && view == "story-task" && pressed.hasClass("oneline-li")) {
+            expandOneliner(pressed, false);
         }
         lastPressed = pressed;
         updateCookie();
     };
 
-    var closeItem = function(event) {
+    var expandOneliner = function(onelinerElem, expandChildren) {
+        var storyId = onelinerElem.attr("id");
+        var divItem = $('div#story-placeholder').clone();
+        var htmlStr = divItem.html();
+        htmlStr = htmlStr.replace(/-1/g, storyId); // Replace all occurences of -1
+
+        var newItem = $(htmlStr);
+        newItem.attr('id', storyId);
+
+        onelinerElem.slideDown(200, function() {
+            newItem.hide();
+            onelinerElem.replaceWith(newItem);
+            updateStoryLi(getParent(storyId));
+            $('.expand-icon', newItem).unbind('click', expandClick);
+            $('.expand-icon', newItem).bind('click', expandClick);
+            bindEventsToItem(newItem);
+            newItem.slideDown(200);
+            if(expandChildren) {
+                toggleChildren(newItem.find("div.icon"));
+            }
+        });
+    };
+
+    var collapseToOneliner = function(event) {
         itemId = event.target.id;
         var item = $(event.target).closest('li');
         var storyId = itemId; // item.attr("id");
@@ -1137,7 +1140,7 @@ $(document).ready(function () {
         newItem.attr('id', storyId);
 
         if($("div.icon", item).hasClass("ui-icon-triangle-1-s")) {
-            $("div.icon", item).trigger('click');
+            toggleChildren($("div.icon", item));
         }
 
         item.slideUp(200, function() {
@@ -1148,7 +1151,6 @@ $(document).ready(function () {
             bindEventsToItem(newItem);
             newItem.slideDown(200);
         });
-
     };
 
     /**
@@ -2662,7 +2664,7 @@ $(document).ready(function () {
         $("a.cloneItem", elem).click(function() {
             cloneItem($(this), false);
         });
-        $("a.closeItem").click(closeItem);
+        $("a.closeItem").click(collapseToOneliner);
         $("a.cloneItem-with-children", elem).click(function() {
             cloneItem($(this), true);
         });
