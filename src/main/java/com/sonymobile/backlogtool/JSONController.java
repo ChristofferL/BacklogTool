@@ -734,6 +734,7 @@ public class JSONController {
             Theme theme = getTheme(updatedStory.getThemeTitle(), story.getArea(), session, createIfDoesNotExist);
             Epic newEpic = getEpic(updatedStory.getEpicTitle(), theme, story.getArea(), session, createIfDoesNotExist);
 
+            Set<Epic> parentsToPush = new HashSet<Epic>();
             //Move story from old epic if it was changed
             if (updatedStory.getEpicTitle() != null) {
                 Epic oldEpic = story.getEpic();
@@ -741,11 +742,13 @@ public class JSONController {
                     if (oldEpic != null) {
                         oldEpic.getChildren().remove(story);
                         oldEpic.rebuildChildrenOrder();
+                        parentsToPush.add(oldEpic);
                     }
                     if (newEpic != null) {
                         newEpic.getChildren().add(story);
                         story.setPrioInEpic(Integer.MAX_VALUE); //The prio gets rebuilt on newEpic.rebuildChildrenOrder().
                         newEpic.rebuildChildrenOrder();
+                        parentsToPush.add(newEpic);
                     }
                 }
             }
@@ -821,6 +824,13 @@ public class JSONController {
             tx.commit();
             if (pushUpdate) {
                 AtmosphereHandler.push(areaName, getJsonString(Story.class, story));
+                if(parentsToPush.size() > 0) {
+                    HashMap<String, Object> hm = new HashMap<String, Object>();
+                    hm.put("lastItem", null);
+                    hm.put("objects", parentsToPush);
+                    hm.put("view", "epic-story"); // It is only considered a move in "epic-story"-view
+                    AtmosphereHandler.push(areaName, JSONController.getJsonString("childMove", hm));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
